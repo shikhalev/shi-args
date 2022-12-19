@@ -10,6 +10,7 @@ class Shi::Args::Value
 
     def initialize(source)
       super source
+      @value = source.intern
       match = @source.match INTERNAL_PATTERN
       if match
         @variable = match[:variable]
@@ -24,17 +25,9 @@ class Shi::Args::Value
       @braced
     end
 
-    def lookup(context, name)
-      lookup = context
-      name.split(".").each do |value|
-        lookup = lookup[value]
-      end
-      lookup
-    end
-
-    def value
+    def get_value
       if @render_context
-        lookup @render_context, @variable
+        Shi::Args::lookup @render_context, @variable
       else
         raise ContextError, "No context attached"
       end
@@ -43,8 +36,6 @@ class Shi::Args::Value
     def attach!(render_context)
       @render_context = render_context
     end
-
-    private :lookup
   end
 
   class String < Shi::Args::Value
