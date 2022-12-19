@@ -9,7 +9,7 @@ class Shi::Args::ContextError < RuntimeError; end
 class Shi::Args
   class << self
     def parse(args)
-      ctx = Context.new
+      ctx = new
       ctx.parse! args
     end
   end
@@ -195,7 +195,7 @@ class Shi::Args
         new_attribute_float_with_unit $~[:key].strip, $~[:float].strip
         parse! $~[:rest]
       when PATTERN_ATTR_PATH
-        new_attribute_path $~[:key].strip, $~[:quoted].strip
+        new_attribute_path $~[:key].strip, $~[:path].strip
         parse! $~[:rest]
       when PATTERN_ATTR_SINGLE_QUOTED
         new_attribute_quoted $~[:key].strip, $~[:quoted].strip

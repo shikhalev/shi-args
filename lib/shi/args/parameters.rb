@@ -15,7 +15,7 @@ class Shi::Args::Parameter
   end
 end
 
-class Shi::Args::Attribute < Parameter
+class Shi::Args::Attribute < Shi::Args::Parameter
   attr_reader :name
 
   def initialize(context, name, value)
@@ -24,7 +24,7 @@ class Shi::Args::Attribute < Parameter
   end
 end
 
-class Shi::Args::Flag < Attribute
+class Shi::Args::Flag < Shi::Args::Attribute
   def initialize(context, name, value)
     super context, name, value
   end

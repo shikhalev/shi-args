@@ -3,7 +3,7 @@
 require_relative "version"
 
 class Shi::Args::Value
-  class Variable < Value
+  class Variable < Shi::Args::Value
     INTERNAL_PATTERN = /^\{\{\-?\s?(?<variable>[[:alpha:]][\w\.]*)\s?\-?\}\}$/
 
     attr_reader :variable
@@ -47,11 +47,11 @@ class Shi::Args::Value
     private :lookup
   end
 
-  class String < Value
+  class String < Shi::Args::Value
     # abstract
   end
 
-  class Path < Value::String
+  class Path < Shi::Args::Value::String
     def initialize(source)
       super source
       sign = source.slice(0)
@@ -68,7 +68,7 @@ class Shi::Args::Value
     end
   end
 
-  class Quoted < Value::String
+  class Quoted < Shi::Args::Value::String
     attr_reader :qoutes
 
     def initialize(source)
@@ -83,25 +83,25 @@ class Shi::Args::Value
     end
   end
 
-  class Numeric < Value
+  class Numeric < Shi::Args::Value
     # abstract
   end
 
-  class Integer < Value::Numeric
+  class Integer < Shi::Args::Value::Numeric
     def initialize(source)
       super source
       @value = source.to_i
     end
   end
 
-  class Float < Value::Numeric
+  class Float < Shi::Args::Value::Numeric
     def initialize(source)
       super source
       @value = source.to_f
     end
   end
 
-  class Hex < Value
+  class Hex < Shi::Args::Value
     attr_reader :raw, :bytes
 
     def initialize(source)
@@ -112,8 +112,8 @@ class Shi::Args::Value
     end
   end
 
-  class WithUnit < Value
-    class Integer < Value::WithUnit
+  class WithUnit < Shi::Args::Value
+    class Integer < Shi::Args::Value::WithUnit
       INTERNAL_PATTERN = /(?<number>\d+)(?<unit>([[:alpha:]]+|%))/
 
       def initialize(source)
@@ -126,7 +126,7 @@ class Shi::Args::Value
       end
     end
 
-    class Float < Value::WithUnit
+    class Float < Shi::Args::Value::WithUnit
       INTERNAL_PATTERN = /(?<number>\d?\.\d+)(?<unit>([[:alpha:]]+|%))/
 
       def initialize(source)
@@ -142,24 +142,24 @@ class Shi::Args::Value
     attr_reader :number, :unit
   end
 
-  class Keyword < Value
+  class Keyword < Shi::Args::Value
     # abstract
   end
 
-  class Boolean < Value::Keyword
+  class Boolean < Shi::Args::Value::Keyword
     def initialize(source, value)
       super source
       @value = value
     end
   end
 
-  class Flag < Value::Boolean
+  class Flag < Shi::Args::Value::Boolean
     def initialize
       super nil, true
     end
   end
 
-  class Nil < Value::Keyword
+  class Nil < Shi::Args::Value::Keyword
     def initialize
       super "nil"
       @value = nil
