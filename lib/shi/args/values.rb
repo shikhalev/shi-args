@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-require_relative 'version'
+require_relative "version"
 
 class Shi::Args::Value
   class Variable < Value
@@ -52,7 +52,20 @@ class Shi::Args::Value
   end
 
   class Path < Value::String
-    # не требует изменений
+    def initialize(source)
+      super source
+      sign = source.slice(0)
+      if sign == '@'
+        @value = source.slice(1..-1)
+        @signed = true
+      else
+        @signed = false
+      end
+    end
+
+    def signed?
+      @signed
+    end
   end
 
   class Quoted < Value::String

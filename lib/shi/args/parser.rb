@@ -21,18 +21,19 @@ class Shi::Args
   ]
   UNITS_PART = UNITS.map { |s| s.to_s }.join("|")
 
-  PATTERN_PARA_VARIABLE = /^(?<variable>\{\{\-?\s?([[:alpha:]]|_)[\w\.]*\s?\-?\}\})(?<rest>$|\s+.*)/
-  PATTERN_FLAG = /^(?<key>([[:alpha:]]|_)[\w]*)(?<rest>$|\s+.*)/
-  PATTERN_PATH = /^(?<path>[\w\.\-\/]+)(?<rest>$|\s+.*)/
+  PATTERN_PARA_VARIABLE      = /^(?<variable>\{\{\-?\s?([[:alpha:]]|_)[\w\.]*\s?\-?\}\})(?<rest>$|\s+.*)/
+  PATTERN_FLAG               = /^(?<key>([[:alpha:]]|_)[\w]*)(?<rest>$|\s+.*)/
+  PATTERN_PARA_PATH          = /^(?<path>@?[\w\.\-\/]+)(?<rest>$|\s+.*)/
   PATTERN_PARA_SINGLE_QUOTED = /^(?<quoted>'.*?')(?<rest>$|\s.*)/
   PATTERN_PARA_DOUBLE_QUOTED = /^(?<quoted>".*?")(?<rest>$|\s.*)/
-  PATTERN_ATTR_KEYWORD = /^(?<key>([[:alpha:]]|_)\w*)=(?<keyword>true|false|nil)(?<rest>$|\s.*)/
-  PATTERN_ATTR_VARIABLE = /^(?<key>([[:alpha:]]|_)\w*)=(?<variable>([[:alpha:]]|_)[\w\.]*)(?<rest>$|\s.*)/
-  PATTERN_ATTR_INTEGER = /^(?<key>([[:alpha:]]|_)\w*)=(?<integer>\d+)(?<rest>$|\s.*)/
-  PATTERN_ATTR_HEX = /^(?<key>([[:alpha:]]|_)\w*)=(?<hexa>#\h+)(?<rest>$|\s.*)/
-  PATTERN_ATTR_FLOAT = /^(?<key>([[:alpha:]]|_)\w*)=(?<float>\d?\.\d+)(?<rest>$|\s.*)/
-  PATTERN_ATTR_INTEGER_U = Regexp.compile('^(?<key>([[:alpha:]]|_)\w*)=(?<integer>\d+(' + UNITS_PART + '))(?<rest>$|\s.*)')
-  PATTERN_ATTR_FLOAT_U = Regexp.compile('^(?<key>([[:alpha:]]|_)\w*)=(?<float>\d?\.\d+(' + UNITS_PART + '))(?<rest>$|\s.*)')
+  PATTERN_ATTR_KEYWORD       = /^(?<key>([[:alpha:]]|_)\w*)=(?<keyword>true|false|nil)(?<rest>$|\s.*)/
+  PATTERN_ATTR_VARIABLE      = /^(?<key>([[:alpha:]]|_)\w*)=(?<variable>([[:alpha:]]|_)[\w\.]*)(?<rest>$|\s.*)/
+  PATTERN_ATTR_INTEGER       = /^(?<key>([[:alpha:]]|_)\w*)=(?<integer>\d+)(?<rest>$|\s.*)/
+  PATTERN_ATTR_HEX           = /^(?<key>([[:alpha:]]|_)\w*)=(?<hexa>#\h+)(?<rest>$|\s.*)/
+  PATTERN_ATTR_FLOAT         = /^(?<key>([[:alpha:]]|_)\w*)=(?<float>\d?\.\d+)(?<rest>$|\s.*)/
+  PATTERN_ATTR_INTEGER_U     = Regexp.compile('^(?<key>([[:alpha:]]|_)\w*)=(?<integer>\d+(' + UNITS_PART + '))(?<rest>$|\s.*)')
+  PATTERN_ATTR_FLOAT_U       = Regexp.compile('^(?<key>([[:alpha:]]|_)\w*)=(?<float>\d?\.\d+(' + UNITS_PART + '))(?<rest>$|\s.*)')
+  PATTERN_ATTR_PATH          = /^(?<key>([[:alpha:]]|_)\w*)=(?<path>@?[\w\.\-\/]+)(?<rest>$|\s+.*)/
   PATTERN_ATTR_SINGLE_QUOTED = /^(?<key>([[:alpha:]]|_)\w*)=(?<quoted>'.*?')(?<rest>$|\s.*)/
   PATTERN_ATTR_DOUBLE_QUOTED = /^(?<key>([[:alpha:]]|_)\w*)=(?<quoted>".*?")(?<rest>$|\s.*)/
 
@@ -100,6 +101,13 @@ class Shi::Args
     @attributes[name] = para
   end
 
+  def new_attribute_path (name, source)
+    name = name.intern
+    para = Attribute::new(self, name, Value::Path::new(source))
+    @parameters << para
+    @attributes[name] = para
+  end
+
   def new_attribute_quoted(name, source)
     name = name.intern
     para = Attribute::new(self, name, Value::Quoted::new(source))
@@ -143,7 +151,7 @@ class Shi::Args
   end
 
   private :new_parameter_variable, :new_parameter_path, :new_parameter_quoted,
-    :new_flag, :new_attribute_variable, :new_attribute_keyword, :new_attribute_quoted, :new_attribute_integer, :new_attribute_float,
+    :new_flag, :new_attribute_variable, :new_attribute_keyword, :new_attribute_path, :new_attribute_quoted, :new_attribute_integer, :new_attribute_float,
     :new_attribute_hex, :new_attribute_integer_with_unit, :new_attribute_float_with_unit
 
   def parse!(args)
@@ -156,7 +164,7 @@ class Shi::Args
       when PATTERN_FLAG
         new_flag $~[:key].strip
         parse! $~[:rest]
-      when PATTERN_PATH
+      when PATTERN_PARA_PATH
         new_parameter_path $~[:path].strip
         parse! $~[:rest]
       when PATTERN_PARA_SINGLE_QUOTED
@@ -185,6 +193,9 @@ class Shi::Args
         parse! $~[:rest]
       when PATTERN_ATTR_FLOAT_U
         new_attribute_float_with_unit $~[:key].strip, $~[:float].strip
+        parse! $~[:rest]
+      when PATTERN_ATTR_PATH
+        new_attribute_path $~[:key].strip, $~[:quoted].strip
         parse! $~[:rest]
       when PATTERN_ATTR_SINGLE_QUOTED
         new_attribute_quoted $~[:key].strip, $~[:quoted].strip
