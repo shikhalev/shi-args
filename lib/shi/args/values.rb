@@ -54,6 +54,8 @@ class Shi::Args::Value
       end
     end
 
+    # TODO: value с распарсенным урлом
+
     def signed?
       @signed
     end
