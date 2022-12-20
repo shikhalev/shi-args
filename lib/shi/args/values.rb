@@ -25,11 +25,11 @@ class Shi::Args::Value
       @braced
     end
 
-    def get_value
+    def value
       if @render_context
         Shi::Args::lookup @render_context, @variable
       else
-        raise ContextError, "No context attached"
+        @value
       end
     end
 
