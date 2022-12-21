@@ -2,171 +2,145 @@
 
 require_relative "version"
 
-class Shi::Args::Value
-  class Variable < Shi::Args::Value
-    INTERNAL_PATTERN = /^\{\{\-?\s?(?<variable>[[:alpha:]][\w\.]*)\s?\-?\}\}$/
-
-    attr_reader :variable
+module Shi::Args::Value
+  class Color
+    attr_reader :value
+    attr_reader :red, :green, :blue, :alpha
 
     def initialize(source)
-      super source
-      @value = source.intern
-      match = @source.match INTERNAL_PATTERN
-      if match
-        @variable = match[:variable]
-        @braced = true
+      @value = source.strip
+      plain = @value.slice(1..-1)
+      case plain.length
+      when 3
+        @red = (plain.slice(0) * 2).to_i(16)
+        @green = (plain.slice(1) * 2).to_i(16)
+        @blue = (plain.slice(2) * 2).to_i(16)
+        @alpha = nil
+      when 4
+        @red = (plain.slice(0) * 2).to_i(16)
+        @green = (plain.slice(1) * 2).to_i(16)
+        @blue = (plain.slice(2) * 2).to_i(16)
+        @alpha = (plain.slice(3) * 2).to_i(16)
+      when 6
+        @red = plain.slice(0..1).to_i(16)
+        @green = plain.slice(2..3).to_i(16)
+        @blue = plain.slice(4..5).to_i(16)
+        @alpha = nil
+      when 8
+        @red = plain.slice(0..1).to_i(16)
+        @green = plain.slice(2..3).to_i(16)
+        @blue = plain.slice(4..5).to_i(16)
+        @alpha = plain.slice(6..7).to_i(16)
       else
-        @variable = source
-        @braced = false
+        raise ArgumentError, "Invalid color: #{source}"
       end
     end
 
-    def braced?
-      @braced
-    end
-
-    def value
-      if @render_context
-        Shi::Args::lookup @render_context, @variable
-      else
-        @value
-      end
-    end
-
-    def attach!(render_context)
-      @render_context = render_context
+    def to_s
+      @value
     end
   end
 
-  class String < Shi::Args::Value
-    # abstract
-  end
-
-  class Path < Shi::Args::Value::String
-    def initialize(source)
-      super source
-      sign = source.slice(0)
-      if sign == '@'
-        @value = source.slice(1..-1)
-        @signed = true
-      else
-        @signed = false
-      end
-    end
-
-    # TODO: value с распарсенным урлом
-
-    def signed?
-      @signed
-    end
-  end
-
-  class Quoted < Shi::Args::Value::String
-    attr_reader :qoutes
-
-    def initialize(source)
-      super source
-      @value = source.slice(1..-2)
-      @quotes = case source.slice(0)
-        when "'"
-          :single
-        when '"'
-          :double
-        end
-    end
-  end
-
-  class Numeric < Shi::Args::Value
-    # abstract
-  end
-
-  class Integer < Shi::Args::Value::Numeric
-    def initialize(source)
-      super source
-      @value = source.to_i
-    end
-  end
-
-  class Float < Shi::Args::Value::Numeric
-    def initialize(source)
-      super source
-      @value = source.to_f
-    end
-  end
-
-  class Hex < Shi::Args::Value
-    attr_reader :raw, :bytes
-
-    def initialize(source)
-      super source
-      src = source.slice(1..-1)
-      @raw = src.to_i(16)
-      @bytes = src.each_char.each_slice(2).map { |s| s.join.to_i(16) }
-    end
-  end
-
-  class WithUnit < Shi::Args::Value
-    class Integer < Shi::Args::Value::WithUnit
-      INTERNAL_PATTERN = /(?<number>\d+)(?<unit>([[:alpha:]]+|%))/
-
-      def initialize(source)
-        super source
-        match = @source.match INTERNAL_PATTERN
-        if match
-          @number = match[:number].to_i
-          @unit = match[:unit].intern
-        end
-      end
-    end
-
-    class Float < Shi::Args::Value::WithUnit
-      INTERNAL_PATTERN = /(?<number>\d?\.\d+)(?<unit>([[:alpha:]]+|%))/
-
-      def initialize(source)
-        super source
-        match = @source.match INTERNAL_PATTERN
-        if match
-          @number = match[:number].to_f
-          @unit = match[:unit].intern
-        end
-      end
-    end
-
+  class Measure
+    attr_reader :value
     attr_reader :number, :unit
-  end
 
-  class Keyword < Shi::Args::Value
-    # abstract
-  end
-
-  class Boolean < Shi::Args::Value::Keyword
-    def initialize(source, value)
-      super source
+    def initialize(value, number, unit)
       @value = value
+      @number = number
+      @unit = unit.intern
     end
   end
 
-  class Flag < Shi::Args::Value::Boolean
-    def initialize
-      super nil, true
+  class << self
+    def lookup(context, name)
+      return nil if name.nil?
+      lookup = context
+      name.split(".").each do |value|
+        lookup = lookup[value]
+        break if lookup.nil?
+      end
+      lookup
     end
-  end
 
-  class Nil < Shi::Args::Value::Keyword
-    def initialize
-      super "nil"
-      @value = nil
+    def lookup_file(context, path)
+      site = context.registers[:site]
+      relative_path = Liquid::Template.parse(path.strip).render(context)
+      relative_path_with_leading_slash = PathManager.join("", relative_path)
+      site.each_site_file do |file|
+        return item if item.relative_path == relative_path
+        return item if item.relative_path == relative_path_with_leading_slash
+      end
+      raise ArgumentError, "Couldn't find file: #{relative_path}"
     end
-  end
 
-  attr_reader :source, :value
+    def unquote(source)
+      source = source.strip
+      s = source.slice(0)
+      f = source.slice(-1)
+      if s == '"'
+        if f == '"'
+          return source.slice(1..-2)
+        else
+          raise ArgumentError, "Invalid quoted string: #{source}"
+        end
+      elsif s == "'"
+        if f == "'"
+          return source.slice(1..-2)
+        else
+          raise ArgumentError, "Invalid quoted string: #{source}"
+        end
+      else
+        return source
+      end
+    end
 
-  def initialize(source)
-    @source = source
-    @value = source
-  end
+    private :lookup, :lookup_file, :unquote
 
-  def to_s
-    @source
+    UNITS = %i[
+      %
+      cm mm Q in pc pt px
+      em ex ch rem lh rlh vw vh vmin vmax vb vi svw svh lvw lvh dvw dvh
+    ]
+    UNITS_PART = "(" + UNITS.map { |s| s.to_s }.join("|") + ")"
+
+    PATTERN_TRUE = "true"
+    PATTERN_FALSE = "false"
+    PATTERN_NIL = "nil"
+    PATTERN_VARIABLE = /^\{\{\-?\s+(?<variable>[a-zA-Z_][\w\.]*)\s+\-?\}\}$/
+    PATTERN_LINK = /^@(?<path>.*)$/
+    PATTERN_COLOR = /^(?<color>#\h+)$/
+    PATTERN_INTEGER = /^(?<number>\d+)$/
+    PATTERN_FLOAT = /^(?<number>\d*\.\d+)$/
+    PATTERN_INTEGER_MEASURE = Regexp.compile '^(?<number>\d+)(?<unit>' + UNITS_PART + ")$"
+    PATTERN_FLOAT_MEASURE = Regexp.compile '^(?<number>\d*\.\d+)(?<unit>' + UNITS_PART + ")$"
+
+    def parse(context, value)
+      value = value.strip
+      case value
+      when PATTERN_TRUE
+        true
+      when PATTERN_FALSE
+        false
+      when PATTERN_NIL
+        nil
+      when PATTERN_VARIABLE
+        lookup context, $~[:variable]
+      when PATTERN_LINK
+        lookup_file unquote($~[:path])
+      when PATTERN_COLOR
+        Shi::Args::Value::Color::new $~[:color]
+      when PATTERN_INTEGER
+        $~[:number].to_i
+      when PATTERN_FLOAT
+        $~[:number].to_f
+      when PATTERN_INTEGER_MEASURE
+        Shi::Args::Value::Measure::new value, $~[:number].to_i, $~[:unit]
+      when PATTERN_FLOAT_MEASURE
+        Shi::Args::Value::Measure::new value, $~[:number].to_f, $~[:unit]
+      else
+        unquote value
+      end
+    end
   end
 end
