@@ -2,6 +2,8 @@
 
 require_relative "version"
 
+require 'jekyll/path_manager'
+
 module Shi::Args::Value
   class Color
     attr_reader :value
@@ -66,8 +68,8 @@ module Shi::Args::Value
     def lookup_file(context, path)
       site = context.registers[:site]
       relative_path = Liquid::Template.parse(path.strip).render(context)
-      relative_path_with_leading_slash = PathManager.join("", relative_path)
-      site.each_site_file do |file|
+      relative_path_with_leading_slash = Jekyll::PathManager.join("", relative_path)
+      site.each_site_file do |item|
         return item if item.relative_path == relative_path
         return item if item.relative_path == relative_path_with_leading_slash
       end
@@ -127,7 +129,7 @@ module Shi::Args::Value
       when PATTERN_VARIABLE
         lookup context, $~[:variable]
       when PATTERN_LINK
-        lookup_file unquote($~[:path])
+        lookup_file context, unquote($~[:path])
       when PATTERN_COLOR
         Shi::Args::Value::Color::new $~[:color]
       when PATTERN_INTEGER

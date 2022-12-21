@@ -65,20 +65,32 @@ class Shi::Args::Params
     @attrs[name] = value
   end
 
-  PATTERN_ATTR_KEY = /^(?<key>[a-zA-Z_]\w*)\s+(?<rest>.*)$/
-  PATTERN_PARA_VARIABLE = /^(?<value>\{\{\-?\s+[a-zA-Z_][\w\.]*\s+\-?\}\})\s+(?<rest>.*)$/
-  PATTERN_PARA_SINGLE_QUOTED = /^(?<value>@?'.*?')\s+(?<rest>.*)$/
-  PATTERN_PARA_DOUBLE_QUOTED = /^(?<value>@?".*?")\s+(?<rest>.*)$/
-  PATTERN_PARA_SIMPLE = /^(?<value>@?\S+)\s+(?<rest>.*)$/
-  PATTERN_ATTR_VARIABLE = /^(?<key>[a-zA-Z_]\w*)=(?<value>\{\{\-?\s+[a-zA-Z_][\w\.]*\s+\-?\}\})\s+(?<rest>.*)$/
-  PATTERN_ATTR_SINGLE_QUOTED = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?'.*?')\s+(?<rest>.*)$/
-  PATTERN_ATTR_DOUBLE_QUOTED = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?".*?")\s+(?<rest>.*)$/
-  PATTERN_ATTR_SIMPLE = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?\S+)\s+(?<rest>.*)$/
+  PATTERN_ATTR_KEY = /^(?<key>[a-zA-Z_]\w*)\s*(?<rest>.*)$/
+  PATTERN_PARA_VARIABLE = /^(?<value>\{\{\-?\s+[a-zA-Z_][\w\.]*\s+\-?\}\})\s*(?<rest>.*)$/
+  PATTERN_PARA_SINGLE_QUOTED = /^(?<value>@?'.*?')\s*(?<rest>.*)$/
+  PATTERN_PARA_DOUBLE_QUOTED = /^(?<value>@?".*?")\s*(?<rest>.*)$/
+  PATTERN_PARA_SIMPLE = /^(?<value>@?\S+)\s*(?<rest>.*)$/
+  PATTERN_ATTR_VARIABLE = /^(?<key>[a-zA-Z_]\w*)=(?<value>\{\{\-?\s*[a-zA-Z_][\w\.]*\s+\-?\}\})\s+(?<rest>.*)$/
+  PATTERN_ATTR_SINGLE_QUOTED = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?'.*?')\s*(?<rest>.*)$/
+  PATTERN_ATTR_DOUBLE_QUOTED = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?".*?")\s*(?<rest>.*)$/
+  PATTERN_ATTR_SIMPLE = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?\S+)\s*(?<rest>.*)$/
 
   def parse!(markup)
     source = escape markup.strip
     until source.empty?
       case source
+      when PATTERN_ATTR_VARIABLE
+        add_attr! $~[:key].strip, $~[:value].strip
+        source = $~[:rest].strip
+      when PATTERN_ATTR_SINGLE_QUOTED
+        add_attr! $~[:key].strip, $~[:value].strip
+        source = $~[:rest].strip
+      when PATTERN_ATTR_DOUBLE_QUOTED                          # TODO: проверить возможность схлопывания
+        add_attr! $~[:key].strip, $~[:value].strip
+        source = $~[:rest].strip
+      when PATTERN_ATTR_SIMPLE
+        add_attr! $~[:key].strip, $~[:value].strip
+        source = $~[:rest].strip
       when PATTERN_ATTR_KEY
         add_key! $~[:key].strip
         source = $~[:rest].strip
@@ -94,32 +106,21 @@ class Shi::Args::Params
       when PATTERN_PARA_SIMPLE
         add_param! $~[:value].strip
         source = $~[:rest].strip
-      when PATTERN_ATTR_VARIABLE
-        add_attr! $~[:key].strip, $~[:value].strip
-        source = $~[:rest].strip
-      when PATTERN_ATTR_SINGLE_QUOTED
-        add_attr! $~[:key].strip, $~[:value].strip
-        source = $~[:rest].strip
-      when PATTERN_ATTR_DOUBLE_QUOTED                          # TODO: проверить возможность схлопывания
-        add_attr! $~[:key].strip, $~[:value].strip
-        source = $~[:rest].strip
-      when PATTERN_ATTR_SIMPLE
-        add_attr! $~[:key].strip, $~[:value].strip
-        source = $~[:rest].strip
       else
-        raise ArgumentError, "Invalid param(s): #{source}"
+        raise ArgumentError, "Invalid param(s): #{source}!"
       end
     end
+    self
   end
 
   def [](key_or_index)
     case key_or_index
     when Integer
-      @params[key_or_index]&.value&.value
+      @params[key_or_index]&.value
     when String
-      @attrs[key_or_index.intern]&.value&.value
+      @attrs[key_or_index.intern]
     when Symbol
-      @attrs[key_or_index]&.value&.value
+      @attrs[key_or_index]
     else
       nil
     end
@@ -133,27 +134,35 @@ class Shi::Args::Params
 
   def each_value
     @params.each_with_index do |param, index|
-      if Attribute === param
-        yield param.name, param.value
+      if param[:name]
+        yield param[:name], param[:value]
       else
-        yield index, param.value
+        yield index, param[:value]
       end
     end
   end
 
   def each_attribute
     @attrs.each do |key, param|
-      yield key, param.value
+      yield key, param[:value]
     end
   end
 
   def each_positional
     index = 0
     @params.each do |param|
-      unless Attribute === param
+      if !(param[:name])
         index += 1
-        yield index, param.value
+        yield index, param[:value]
       end
     end
+  end
+
+  def to_h
+    result = {}
+    each_value do |key, value|
+      result[key] = value
+    end
+    result
   end
 end
