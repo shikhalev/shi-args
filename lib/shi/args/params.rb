@@ -5,12 +5,16 @@ require_relative 'values'
 
 class Shi::Args::Params
   class << self
+    # @param context [Liquid::Context]
+    # @param markup [String]
+    # @return [Params]
     def parse(context, markup)
       obj = self.new context
       obj.parse! markup
     end
   end
 
+  # @param context [Liquid::Context]
   def initialize(context)
     @context = context
     @params = []
@@ -65,6 +69,8 @@ class Shi::Args::Params
     @attrs[name] = value
   end
 
+  private :parse_value, :add_key!, :add_param!, :add_attr!
+
   PATTERN_ATTR_KEY = /^(?<key>[a-zA-Z_]\w*)\s*(?<rest>.*)$/
   PATTERN_PARA_VARIABLE = /^(?<value>\{\{\-?\s+[a-zA-Z_][\w\.]*\s+\-?\}\})\s*(?<rest>.*)$/
   PATTERN_PARA_SINGLE_QUOTED = /^(?<value>@?'.*?')\s*(?<rest>.*)$/
@@ -75,6 +81,8 @@ class Shi::Args::Params
   PATTERN_ATTR_DOUBLE_QUOTED = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?".*?")\s*(?<rest>.*)$/
   PATTERN_ATTR_SIMPLE = /^(?<key>[a-zA-Z_]\w*)=(?<value>@?\S+)\s*(?<rest>.*)$/
 
+  # @param markup [String]
+  # @return [self]
   def parse!(markup)
     source = escape markup.strip
     until source.empty?
@@ -113,6 +121,8 @@ class Shi::Args::Params
     self
   end
 
+  # @param key_or_index [String, Symbol, Integer]
+  # @return [Object, nil]
   def [](key_or_index)
     case key_or_index
     when Integer
@@ -158,6 +168,7 @@ class Shi::Args::Params
     end
   end
 
+  # @return [Hash]
   def to_h
     result = {}
     each_value do |key, value|

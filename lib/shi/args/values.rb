@@ -6,9 +6,22 @@ require 'jekyll/path_manager'
 
 module Shi::Args::Value
   class Color
+    # @return [String]
     attr_reader :value
-    attr_reader :red, :green, :blue, :alpha
 
+    # @return [Integer]
+    attr_reader :red
+
+    # @return [Integer]
+    attr_reader :green
+
+    # @return [Integer]
+    attr_reader :blue
+
+    # @return [Integer]
+    attr_reader :alpha
+
+    # @param source [String]
     def initialize(source)
       @value = source.strip
       plain = @value.slice(1..-1)
@@ -38,6 +51,7 @@ module Shi::Args::Value
       end
     end
 
+    # @return [String]
     def to_s
       @value
     end
@@ -45,26 +59,39 @@ module Shi::Args::Value
 
   class Measure
     class << self
+      # @param number [Numeric]
+      # @return [String]
       def px(number)
         new "#{number}px", number, :px
       end
     end
 
+    # @return [String]
     attr_reader :value
-    attr_reader :number, :unit
 
+    # @return [Numeric]
+    attr_reader :number
+
+    # @return [Symbol]
+    attr_reader :unit
+
+    # @param value [String]
+    # @param number [Numeric]
+    # @param unit [Symnol, String]
     def initialize(value, number, unit)
       @value = value
       @number = number
       @unit = unit.intern
     end
 
+    # @return [String]
     def to_s
       @value
     end
   end
 
   class << self
+    # @private
     def lookup(context, name)
       return nil if name.nil?
       lookup = context
@@ -75,6 +102,7 @@ module Shi::Args::Value
       lookup
     end
 
+    # @private
     def lookup_file(context, path)
       site = context.registers[:site]
       relative_path = Liquid::Template.parse(path.strip).render(context)
@@ -86,6 +114,7 @@ module Shi::Args::Value
       raise ArgumentError, "Couldn't find file: #{relative_path}"
     end
 
+    # @private
     def unquote(source)
       source = source.strip
       s = source.slice(0)
@@ -127,6 +156,9 @@ module Shi::Args::Value
     PATTERN_INTEGER_MEASURE = Regexp.compile '^(?<number>\d+)(?<unit>' + UNITS_PART + ")$"
     PATTERN_FLOAT_MEASURE = Regexp.compile '^(?<number>\d*\.\d+)(?<unit>' + UNITS_PART + ")$"
 
+    # @param context [Liquid::Context]
+    # @param value [Sring]
+    # @return [Object]
     def parse(context, value)
       value = value.strip
       case value
