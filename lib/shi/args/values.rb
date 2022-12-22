@@ -44,6 +44,12 @@ module Shi::Args::Value
   end
 
   class Measure
+    class << self
+      def px(number)
+        new "#{number}px", number, :px
+      end
+    end
+
     attr_reader :value
     attr_reader :number, :unit
 
@@ -51,6 +57,10 @@ module Shi::Args::Value
       @value = value
       @number = number
       @unit = unit.intern
+    end
+
+    def to_s
+      @value
     end
   end
 
