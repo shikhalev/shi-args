@@ -8,26 +8,26 @@ class Shi::Args::Params
     # @param context [Liquid::Context]
     # @param markup [String]
     # @return [Params]
-    def parse(context, markup)
+    def parse context, markup
       obj = self.new context
       obj.parse! markup
     end
   end
 
   # @param context [Liquid::Context]
-  def initialize(context)
+  def initialize context
     @context = context
     @params = []
     @attrs = {}
   end
 
   ESCAPES = {
-    "\\'" => "(#SINGLE#)",
-    '\"' => "(#DOUBLE#)",
-    '\ ' => "(#SPACE#)",
+    "\\'" => '(#SINGLE#)',
+    '\"' => '(#DOUBLE#)',
+    '\ ' => '(#SPACE#)'
   }
 
-  def escape(str)
+  def escape str
     return nil if str.nil?
     result = str
     ESCAPES.each do |key, value|
@@ -36,7 +36,7 @@ class Shi::Args::Params
     return result
   end
 
-  def descape(str)
+  def descape str
     return nil if str.nil?
     result = str
     ESCAPES.each do |key, value|
@@ -47,19 +47,19 @@ class Shi::Args::Params
 
   private :escape, :descape
 
-  def add_key!(name)
+  def add_key! name
     name = name.intern
     value = true
     @params << { name: name, value: value }
     @attrs[name] = value
   end
 
-  def add_param!(source)
+  def add_param! source
     value = Shi::Args::Value::parse @context, source
     @params << { value: value }
   end
 
-  def add_attr!(name, source)
+  def add_attr! name, source
     name = name.intern
     value = Shi::Args::Value::parse @context, source
     @params << { name: name, value: value }
@@ -80,7 +80,7 @@ class Shi::Args::Params
 
   # @param markup [String]
   # @return [self]
-  def parse!(markup)
+  def parse! markup
     source = escape markup.strip
     until source.empty?
       case source
@@ -120,7 +120,7 @@ class Shi::Args::Params
 
   # @param key_or_index [String, Symbol, Integer]
   # @return [Object, nil]
-  def [](key_or_index)
+  def [] key_or_index
     case key_or_index
     when Integer
       @params[key_or_index]&.fetch(:value, nil)

@@ -22,7 +22,7 @@ module Shi::Args::Value
     attr_reader :alpha
 
     # @param source [String]
-    def initialize(source)
+    def initialize source
       @value = source.strip
       plain = @value.slice(1..-1)
       case plain.length
@@ -61,7 +61,7 @@ module Shi::Args::Value
     class << self
       # @param number [Numeric]
       # @return [String]
-      def px(number)
+      def px number
         new "#{number}px", number, :px
       end
     end
@@ -78,7 +78,7 @@ module Shi::Args::Value
     # @param value [String]
     # @param number [Numeric]
     # @param unit [Symnol, String]
-    def initialize(value, number, unit)
+    def initialize value, number, unit
       @value = value
       @number = number
       @unit = unit.intern
@@ -91,20 +91,20 @@ module Shi::Args::Value
   end
 
   class << self
-    def lookup(context, name)
+    def lookup context, name
       return nil if name.nil?
       lookup = context
-      name.split(".").each do |value|
+      name.split('.').each do |value|
         lookup = lookup[value]
         break if lookup.nil?
       end
       lookup
     end
 
-    def lookup_file(context, path)
+    def lookup_file context, path
       site = context.registers[:site]
       relative_path = Liquid::Template.parse(path.strip).render(context)
-      relative_path_with_leading_slash = Jekyll::PathManager.join("", relative_path)
+      relative_path_with_leading_slash = Jekyll::PathManager.join('', relative_path)
       site.each_site_file do |item|
         return item if item.relative_path == relative_path
         return item if item.relative_path == relative_path_with_leading_slash
@@ -113,7 +113,7 @@ module Shi::Args::Value
     end
 
     # @private
-    def unquote(source)
+    def unquote source
       source = source.strip
       s = source.slice(0)
       f = source.slice(-1)
@@ -141,23 +141,23 @@ module Shi::Args::Value
       cm mm Q in pc pt px
       em ex ch rem lh rlh vw vh vmin vmax vb vi svw svh lvw lvh dvw dvh
     ]
-    UNITS_PART = "(" + UNITS.map { |s| s.to_s }.join("|") + ")"
+    UNITS_PART = '(' + UNITS.map { |s| s.to_s }.join('|') + ')'
 
-    PATTERN_TRUE = "true"
-    PATTERN_FALSE = "false"
-    PATTERN_NIL = "nil"
+    PATTERN_TRUE = 'true'
+    PATTERN_FALSE = 'false'
+    PATTERN_NIL = 'nil'
     PATTERN_VARIABLE = /^\{\{\-?\s+(?<variable>[a-zA-Z_][\w\.]*)\s+\-?\}\}$/
     PATTERN_LINK = /^@(?<path>.*)$/
     PATTERN_COLOR = /^(?<color>#\h+)$/
     PATTERN_INTEGER = /^(?<number>\d+)$/
     PATTERN_FLOAT = /^(?<number>\d*\.\d+)$/
-    PATTERN_INTEGER_MEASURE = Regexp.compile '^(?<number>\d+)(?<unit>' + UNITS_PART + ")$"
-    PATTERN_FLOAT_MEASURE = Regexp.compile '^(?<number>\d*\.\d+)(?<unit>' + UNITS_PART + ")$"
+    PATTERN_INTEGER_MEASURE = Regexp.compile '^(?<number>\d+)(?<unit>' + UNITS_PART + ')$'
+    PATTERN_FLOAT_MEASURE = Regexp.compile '^(?<number>\d*\.\d+)(?<unit>' + UNITS_PART + ')$'
 
     # @param context [Liquid::Context]
     # @param value [Sring]
     # @return [Object]
-    def parse(context, value)
+    def parse context, value
       value = value.strip
       case value
       when PATTERN_TRUE
