@@ -47,10 +47,6 @@ class Shi::Args::Params
 
   private :escape, :descape
 
-  def parse_value(source)
-    Shi::Args::Value::parse @context, source
-  end
-
   def add_key!(name)
     name = name.intern
     value = true
@@ -59,17 +55,18 @@ class Shi::Args::Params
   end
 
   def add_param!(source)
-    @params << { value: parse_value(source) }
+    value = Shi::Args::Value::parse @context, source
+    @params << { value: value }
   end
 
   def add_attr!(name, source)
     name = name.intern
-    value = parse_value(source)
+    value = Shi::Args::Value::parse @context, source
     @params << { name: name, value: value }
     @attrs[name] = value
   end
 
-  private :parse_value, :add_key!, :add_param!, :add_attr!
+  private :add_key!, :add_param!, :add_attr!
 
   PATTERN_ATTR_KEY = /^(?<key>[a-zA-Z_]\w*)\s*(?<rest>.*)$/
   PATTERN_PARA_VARIABLE = /^(?<value>\{\{\-?\s+[a-zA-Z_][\w\.]*\s+\-?\}\})\s*(?<rest>.*)$/
@@ -93,7 +90,7 @@ class Shi::Args::Params
       when PATTERN_ATTR_SINGLE_QUOTED
         add_attr! $~[:key].strip, $~[:value].strip
         source = $~[:rest].strip
-      when PATTERN_ATTR_DOUBLE_QUOTED                          # TODO: проверить возможность схлопывания
+      when PATTERN_ATTR_DOUBLE_QUOTED # TODO: проверить возможность схлопывания
         add_attr! $~[:key].strip, $~[:value].strip
         source = $~[:rest].strip
       when PATTERN_ATTR_SIMPLE
@@ -126,7 +123,7 @@ class Shi::Args::Params
   def [](key_or_index)
     case key_or_index
     when Integer
-      @params[key_or_index]&.value
+      @params[key_or_index]&.fetch(:value, nil)
     when String
       @attrs[key_or_index.intern]
     when Symbol

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-require_relative "version"
+require_relative 'version'
 
 require 'jekyll/path_manager'
 
@@ -91,7 +91,6 @@ module Shi::Args::Value
   end
 
   class << self
-    # @private
     def lookup(context, name)
       return nil if name.nil?
       lookup = context
@@ -102,7 +101,6 @@ module Shi::Args::Value
       lookup
     end
 
-    # @private
     def lookup_file(context, path)
       site = context.registers[:site]
       relative_path = Liquid::Template.parse(path.strip).render(context)
@@ -136,7 +134,7 @@ module Shi::Args::Value
       end
     end
 
-    private :lookup, :lookup_file, :unquote
+    private :unquote
 
     UNITS = %i[
       %
