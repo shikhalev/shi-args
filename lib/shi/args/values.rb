@@ -2,6 +2,7 @@
 
 require_relative 'version'
 
+require 'shi/tools'
 require 'jekyll/path_manager'
 
 module Shi::Args::Value
@@ -91,15 +92,8 @@ module Shi::Args::Value
   end
 
   class << self
-    def lookup context, name
-      return nil if name.nil?
-      lookup = context
-      name.split('.').each do |value|
-        lookup = lookup[value]
-        break if lookup.nil?
-      end
-      lookup
-    end
+
+    include Shi::Tools
 
     def lookup_file context, path
       site = context.registers[:site]
