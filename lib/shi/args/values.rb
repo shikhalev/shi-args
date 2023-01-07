@@ -103,6 +103,12 @@ module Shi::Args::Value
         return item if item.relative_path == relative_path
         return item if item.relative_path == relative_path_with_leading_slash
       end
+      site.collections.each do |collection|
+        collection.files.each do |file|
+          return file if file.relative_path == relative_path
+          return file if file.relative_path == relative_path_with_leading_slash
+        end
+      end
       raise ArgumentError, "Couldn't find file: #{relative_path}"
     end
 
