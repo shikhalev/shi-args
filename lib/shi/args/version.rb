@@ -2,6 +2,6 @@
 
 module Shi
   module Args
-    VERSION = '0.3.3.6'
+    VERSION = '0.3.3.7'
   end
 end

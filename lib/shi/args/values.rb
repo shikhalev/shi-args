@@ -59,6 +59,16 @@ module Shi::Args::Value
   end
 
   class Measure
+    KS = {
+      :in => 288,
+      :px => 288 / 96,
+      :pt => 288 / 72,
+      :pc => 288 / 6,
+      :mm => 288 / 25.4,
+      :cm => 288 / 2.54,
+      :Q => 288 / (25.4 * 4)
+    }
+
     class << self
       # @param number [Numeric]
       # @return [String]
@@ -89,25 +99,36 @@ module Shi::Args::Value
     def to_s
       @value
     end
+
+    def to unit
+      self_k = KS[@unit]
+      if self_k.nil?
+        raise ArgumentError, "Invalid unit for conversion: #{@unit.inspect}!"
+      end
+      unit_k = KS[unit.intern]
+      if unit_k.nil?
+        raise ArgumentError, "Invalid unit for conversion: #{unit.inspect}!"
+      end
+      r_number = @number * self_k / unit_k
+      r_value = "#{r_number}#{unit}"
+      Measure::new r_value, r_number, unit
+    end
+
+    def to_px
+      to(:px).number
+    end
   end
 
   class << self
-
     include Shi::Tools
 
     def lookup_file context, path
       site = context.registers[:site]
       relative_path = Liquid::Template.parse(path.strip).render(context)
       relative_path_with_leading_slash = Jekyll::PathManager.join('', relative_path)
-      site.each_site_file do |item|
+      site.static_files.each do |item|
         return item if item.relative_path == relative_path
         return item if item.relative_path == relative_path_with_leading_slash
-      end
-      site.collections.each do |_, collection|
-        collection.files.each do |file|
-          return file if file.relative_path == relative_path
-          return file if file.relative_path == relative_path_with_leading_slash
-        end
       end
       raise ArgumentError, "Couldn't find file: #{relative_path}"
     end
