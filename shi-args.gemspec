@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
 
-  spec.add_dependency 'shi-tools', '~> 0.1.0'
+  spec.add_dependency 'shi-tools', '~> 0.2.0'
   spec.add_dependency 'jekyll', '>= 4.0', '< 5.0'
   spec.add_dependency 'liquid', '~> 4.0'
 

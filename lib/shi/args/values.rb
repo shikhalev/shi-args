@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 require_relative 'version'
 
@@ -188,7 +188,7 @@ module Shi::Args::Value
       when PATTERN_NIL
         nil
       when PATTERN_VARIABLE
-        lookup context, $~[:variable]
+        context[$~[:variable]]
       when PATTERN_LINK
         lookup_file context, unquote($~[:path])
       when PATTERN_COLOR
