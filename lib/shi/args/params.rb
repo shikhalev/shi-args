@@ -150,8 +150,8 @@ class Shi::Args::Params
   end
 
   def each_attribute
-    @attrs.each do |key, param|
-      yield key, param[:value]
+    @attrs.each do |key, value|
+      yield key, value
     end
   end
 
