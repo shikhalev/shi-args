@@ -81,7 +81,7 @@ class Shi::Args::Params
   # @param markup [String]
   # @return [self]
   def parse! markup
-    source = escape markup.strip
+    source = escape markup.strip.gsub("\n", ' ')
     until source.empty?
       case source
       when PATTERN_ATTR_VARIABLE
