@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/shi-args.svg)](https://badge.fury.io/rb/shi-args)
+
 # Shi::Args
 
 ## Installation
